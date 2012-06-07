@@ -101,6 +101,7 @@ native final class Array.<T> {
 
 // 15.5
 native final class String {
+	function __native_index_operator__(key : number) : MayBeUndefined.<string>;
 
 	// 15.5.2
 	function constructor();
