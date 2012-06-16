@@ -49,4 +49,4 @@ var $__jsx_ObjectHasOwnProperty = Object.prototype.hasOwnProperty;
 JSX.require = function (path) {
 	var m = $__jsx_classMap[path];
 	return m !== undefined ? m : null;
-}
+};

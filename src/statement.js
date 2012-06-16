@@ -1302,7 +1302,7 @@ var InformationStatement = exports.InformationStatement = Statement.extend({
 
 	getToken: function () {
 		return this._token;
-	},
+	}
 
 });
 

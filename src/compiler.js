@@ -412,7 +412,7 @@ var Compiler = exports.Compiler = Class.extend({
 		var lastSlashAt = srcPath.lastIndexOf("/");
 		path = Util.resolvePath((lastSlashAt != -1 ? srcPath.substring(0, lastSlashAt + 1) : "") + givenPath);
 		return path;
-	},
+	}
 
 });
 

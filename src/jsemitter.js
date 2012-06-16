@@ -2084,7 +2084,7 @@ var JavaScriptEmitter = exports.JavaScriptEmitter = Class.extend({
 			var outputLines = this._output.split(/^/m);
 			var genPos = {
 				line: outputLines.length,
-				column: outputLines[outputLines.length-1].length - 1,
+				column: outputLines[outputLines.length-1].length - 1
 			};
 			// XXX: 'line' of original pos seems zero-origin (gfx suspects it's a bug of mozilla/source-map)
 			var origPos = {
