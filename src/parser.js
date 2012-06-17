@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2012 DeNA Co., Ltd.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -427,7 +427,11 @@ var Parser = exports.Parser = Class.extend({
 
 		if (this._errors.length != 0)
 			return false;
-
+            for(var s in this._statements){
+                var util = require('util');
+                util.log(this._statements[s].serialize());
+//                util.log(util.inspect(this._statements[s]));
+            }
 		return true;
 	},
 
@@ -1443,7 +1447,7 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 		}
 		// parse the statement
 		var token = this._expectOpt([
-			"{", "var", ";", "if", "do", "while", "for", "continue", "break", "return", "switch", "throw", "try", "assert", "log", "delete", "debugger"
+		    "{", "var", ";", "if", "do", "while", "for", "continue", "break", "return", "switch", "throw", "try", "assert", "log", "delete", "debugger", "function"
 		]);
 		if (label != null) {
 			if (! (token != null && token.getValue().match(/^(?:do|while|for|switch)$/) != null)) {
@@ -1487,6 +1491,8 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 				return this._deleteStatement(token);
 			case "debugger":
 				return this._debuggerStatement(token);
+                        case "function":
+				return this._functionStatement(token);
 			default:
 				throw new "logic flaw, got " + token.getValue();
 			}
@@ -1547,6 +1553,48 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 		if (expr != null)
 			this._statements.push(new ExpressionStatement(expr));
 		return true;
+	},
+
+	_functionStatement: function (token) {
+            var name = this._expectIdentifier();
+
+	    if (name == null)
+		return null;
+	    if (this._expect("(") == null)
+		return null;
+	    var args = this._functionArgumentsExpr(false, false);
+	    if (args == null)
+		return null;
+	    var returnType = null;
+	    if (this._expectOpt(":") != null) {
+		if ((returnType = this._typeDeclaration(true)) == null)
+		    return null;
+	    }
+	    if (this._expect("{") == null)
+		return null;
+	    var state = this._pushScope(args);
+	    // parse lambda body
+	    var lastToken = this._block();
+	    if (lastToken == null)
+		return null;
+            var util = require('util');
+            util.log(util.inspect(name));
+	    var funcDef =  new MemberFunctionDefinition(
+		token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken);
+            this._popScope();
+	    var funcExpr = new FunctionExpression(token, funcDef);
+            require('util').log(funcExpr);
+            var local = this._registerLocal(name, funcDef.getType());
+            require('util').log(funcDef.getType());
+	    var expr = new LocalExpression(name, local);
+
+            var t= new Token("=", true, token._filename, token._lineNumber, token._columnNumber);
+	    expr = new AssignmentExpression(t,
+                                            expr,
+                                            funcExpr);
+            util.log(util.inspect(expr));
+	    this._statements.push(new ExpressionStatement(expr));
+            return true;
 	},
 
 	_ifStatement: function (token) {
