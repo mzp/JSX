@@ -1491,8 +1491,10 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 				return this._deleteStatement(token);
 			case "debugger":
 				return this._debuggerStatement(token);
-                        case "function":
-				return this._functionStatement(token);
+            case "function":
+				if(this._functionStatement(token)) { return true; }
+				this._restoreState(state);
+				break;
 			default:
 				throw new "logic flaw, got " + token.getValue();
 			}
@@ -1556,46 +1558,20 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 	},
 
 	_functionStatement: function (token) {
-            var name = this._expectIdentifier();
+        var name = this._expectIdentifier();
+		if(name == null) { return false; }
 
-/*	    if (name == null)
-		return null;
-	    if (this._expect("(") == null)
-		return null;
-	    var args = this._functionArgumentsExpr(false, false);
-	    if (args == null)
-		return null;
-	    var returnType = null;
-	    if (this._expectOpt(":") != null) {
-		if ((returnType = this._typeDeclaration(true)) == null)
-		    return null;
-	    }
-	    if (this._expect("{") == null)
-		return null;
-	    var state = this._pushScope(args);
-	    // parse lambda body
-	    var lastToken = this._block();
-	    if (lastToken == null)
-		return null;
-            var util = require('util');
-            util.log(util.inspect(name));
-	    var funcDef =  new MemberFunctionDefinition(
-		token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken);
-            this._popScope();
-	    var funcExpr = new FunctionExpression(token, funcDef);*/
-            var funcExpr = this._functionExpr(token);
-            require('util').log(funcExpr);
-            var local = this._registerLocal(name, funcDef.getType());
-            require('util').log(funcDef.getType());
+        var funcExpr = this._functionExpr(token, name);
+        var funcDef = funcExpr.getFuncDef();
+
+		var local = this._registerLocal(name, funcExpr.getFuncDef().getType());
 	    var expr = new LocalExpression(name, local);
-
-            var t= new Token("=", true, token._filename, token._lineNumber, token._columnNumber);
+        var t= new Token("=", true, token._filename, token._lineNumber, token._columnNumber);
 	    expr = new AssignmentExpression(t,
-                                            expr,
-                                            funcExpr);
-            util.log(util.inspect(expr));
+                                        expr,
+                                        funcExpr);
 	    this._statements.push(new ExpressionStatement(expr));
-            return true;
+        return true;
 	},
 
 	_ifStatement: function (token) {
@@ -2304,7 +2280,7 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 		}
 	},
 
-	_functionExpr: function (token) {
+	_functionExpr: function (token, name) {
 		if (this._expect("(") == null)
 			return null;
 		var args = this._functionArgumentsExpr(false, false);
@@ -2317,6 +2293,13 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 		}
 		if (this._expect("{") == null)
 			return null;
+
+        if(name != null) {
+            this._registerLocal(name,
+								new StaticFunctionType(returnType,
+													   args.map(function(arg) { return arg.getType(); }),
+													   false));
+		}
 		// parse function block
 		var state = this._pushScope(args);
 		var lastToken = this._block();
