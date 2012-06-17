@@ -1558,7 +1558,7 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 	_functionStatement: function (token) {
             var name = this._expectIdentifier();
 
-	    if (name == null)
+/*	    if (name == null)
 		return null;
 	    if (this._expect("(") == null)
 		return null;
@@ -1582,7 +1582,8 @@ if (baseType.equals(Type.variantType)) throw new Error("Hmm");
 	    var funcDef =  new MemberFunctionDefinition(
 		token, null, ClassDefinition.IS_STATIC, returnType, args, this._locals, this._statements, this._closures, lastToken);
             this._popScope();
-	    var funcExpr = new FunctionExpression(token, funcDef);
+	    var funcExpr = new FunctionExpression(token, funcDef);*/
+            var funcExpr = this._functionExpr(token);
             require('util').log(funcExpr);
             var local = this._registerLocal(name, funcDef.getType());
             require('util').log(funcDef.getType());
